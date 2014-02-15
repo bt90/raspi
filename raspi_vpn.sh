@@ -5,17 +5,24 @@
 #  Feel free to copy & share this script  #
 ###########################################
 
-raspi_client_ip="192.168.2.2" # the IP the Raspberry should use to connect to the router
-raspi_client_nm="255.255.255.0" # the netmask of the routers subnet
-raspi_client_nw="192.168.2.0" # the network address of the subnet
-raspi_client_gw="192.168.2.1" # the IP of your router
-raspi_gateway_ip="192.168.2.3" # the IP the clients will use as their gateway
+# the IP of your raspberry
+raspi_client_ip="192.168.2.2"
+# subnetmask
+raspi_client_nm="255.255.255.0"
+# the IP of your router
+raspi_client_gw="192.168.2.1"
+# second IP of the raspberry(gateway address for the clients)
+raspi_gateway_ip="192.168.2.3"
 
 # Your hide.me credentials
 username="sample_user"
 password="sample_password"
 
-server="https://hide.me/setup/ovpn/type/ovpn/server/17" # Default: Netherlands
+# Choose a server
+server="https://hide.me/setup/ovpn/type/ovpn/server/17"  # Netherlands (default)
+#server="https://hide.me/setup/ovpn/type/ovpn/server/71" # Germany
+#server="https://hide.me/setup/ovpn/type/ovpn/server/21" # Switzerland 
+#server="https://hide.me/setup/ovpn/type/ovpn/server/62" # United Kingdom
 
 # Don't change anything beyond this point
 ###########################################
@@ -27,7 +34,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # Install required packages
-apt-get update && apt-get -y install openvpn iptables-persistent
+apt-get update && apt-get -y install openvpn iptables-persistent sipcalc
 
 # Create config
 cd /etc/openvpn
@@ -65,6 +72,7 @@ address $raspi_gateway_ip
 EOF
 
 # Setup IPTables
+raspi_client_nw=$(sipcalc $raspi_client_ip $raspi_client_nm | grep 'Network address' | rev | cut -d' ' -f1 | rev)
 iptables -A FORWARD -s $raspi_client_nw/$raspi_client_nm -i eth0:0 -o eth0 -m conntrack --ctstate NEW -j REJECT
 iptables -A FORWARD -s $raspi_client_nw/$raspi_client_nm -i eth0:0 -o tun0 -m conntrack --ctstate NEW -j ACCEPT
 iptables -t nat -A POSTROUTING -o tun0 -j MASQUERADE
@@ -73,3 +81,7 @@ iptables-save > /etc/iptables/rules.v4
 # Enable IP forwarding
 cp /etc/sysctl.conf /etc/sysctl.conf.old
 sed -i 's/.*net\.ipv4\.ip_forward=.*/net\.ipv4\.ip_forward=1/' /etc/sysctl.conf
+sysctl -p /etc/sysctl.conf
+
+# Restart the interfaces
+nohup bash -c "ifdown eth0 && ifup eth0 && ifdown eth0:0 && ifup eth0:0" > /dev/null 2>&1 &
