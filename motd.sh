@@ -49,10 +49,10 @@ temp=$(vcgencmd measure_temp | tr -dc '[:digit:].')
 usage=$(df / | tail -n 1 |tr -s ' ' | cut -d' ' -f5) # Root filesystem
 
 # Logins
-let log=$(w -s | wc -l)-2
+log=$(w -sh | wc -l)
 
 # Processes
-psu=$(ps U $USER h | wc -l)
+psu=$(ps -U $USER h | wc -l)
 psa=$(ps -A h | wc -l)
 
 # Text colors
