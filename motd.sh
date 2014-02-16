@@ -10,7 +10,7 @@
 # 1. Save this script as /usr/local/bin/motd
 # 2. sudo chmod +x /usr/local/bin/motd
 # 3. Edit /etc/profile to call the script in the last line(simply type: motd)
-# 4. sudo echo '' > /etc/motd
+# 4. sudo rm /etc/motd
 # 5. sudo echo '' > /etc/motd.tail
 # 6. sudo echo '' > /var/run/motd.dynamic
 # 7. sudo sed -i "/.*uname/s/^/#/g" /etc/init.d/motd
@@ -37,16 +37,16 @@ let up[4]=${up[0]}%60       # seconds
 load=($(cat /proc/loadavg))
 
 # Memory
-mem[0]=$(free -mo | tr -dc '[:digit:][:blank:]' | tr -s ' ')
-mem[1]=$(echo ${mem[0]} | cut -d' ' -f1) # total
-mem[2]=$(echo ${mem[0]} | cut -d' ' -f2) # used
-mem[3]=$(echo ${mem[0]} | cut -d' ' -f8) # used Swap
+mem[0]=$(free -mo | tr -dc '[:digit:][:blank:]')
+mem[1]=$(echo ${mem[0]} | awk '{print $1}') # total
+mem[2]=$(echo ${mem[0]} | awk '{print $2}') # used
+mem[3]=$(echo ${mem[0]} | awk '{print $8}') # used Swap
 
 # Temperature
 temp=$(vcgencmd measure_temp | tr -dc '[:digit:].')
 
 # Disk Usage
-usage=$(df / | tail -n 1 |tr -s ' ' | cut -d' ' -f5) # Root filesystem
+usage=$(df / | tail -n 1 | awk '{print $5}') # Root filesystem
 
 # Logins
 log=$(w -sh | wc -l)
