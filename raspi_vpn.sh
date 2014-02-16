@@ -83,5 +83,8 @@ cp /etc/sysctl.conf /etc/sysctl.conf.old
 sed -i 's/.*net\.ipv4\.ip_forward=.*/net\.ipv4\.ip_forward=1/' /etc/sysctl.conf
 sysctl -p /etc/sysctl.conf
 
-# Restart the interfaces
-nohup bash -c "ifdown eth0 && ifup eth0 && ifdown eth0:0 && ifup eth0:0" > /dev/null 2>&1 &
+# Start the virtual interface
+ifdown eth0:0 && ifup eth0:0
+
+# Start OpenVPN
+/etc/init.d/openvpn start
